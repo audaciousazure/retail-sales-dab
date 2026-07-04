@@ -29,10 +29,11 @@ gold_df = (
         F.sum("quantity").alias("total_units"),
         F.countDistinct("order_id").alias("num_orders"),
     )
+    .withColumn("avg_order_value", F.round(F.col("total_revenue") / F.col("num_orders"), 2))
     .orderBy("order_month", "region")
 )
 
-gold_df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.gold_sales_summary")
+gold_df.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{catalog}.{schema}.gold_sales_summary")
 
 print(f"Wrote {gold_df.count()} rows to {catalog}.{schema}.gold_sales_summary")
 display(gold_df)
