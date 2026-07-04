@@ -1,0 +1,47 @@
+# ============================================================
+# resources/sales_job.yml
+# Defines ONE job with three sequential tasks: generate -> transform -> aggregate.
+# No cluster/compute block is specified anywhere below — omitting it
+# is exactly what makes this job run on SERVERLESS compute, which is
+# required on Free Edition.
+# ============================================================
+
+resources:
+  jobs:
+    retail_sales_pipeline:
+      name: "[${bundle.target}] Retail Sales Pipeline"
+      description: Bronze -> Silver -> Gold demo pipeline built with Declarative Automation Bundles
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${var.schema}
+
+      tasks:
+        - task_key: generate_bronze
+          notebook_task:
+            notebook_path: ../src/01_generate_data.py
+            base_parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+
+        - task_key: build_silver
+          depends_on:
+            - task_key: generate_bronze
+          notebook_task:
+            notebook_path: ../src/02_transform.py
+            base_parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+
+        - task_key: build_gold
+          depends_on:
+            - task_key: build_silver
+          notebook_task:
+            notebook_path: ../src/03_gold_report.py
+            base_parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+
+      email_notifications: {}
