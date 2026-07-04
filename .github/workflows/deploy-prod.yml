@@ -1,0 +1,32 @@
+name: Deploy to Prod
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: prod_environment
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: prod   # if you added Required reviewers to this environment,
+                         # this run pauses here until approved in the Actions tab
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Validate bundle
+        run: databricks bundle validate -t prod
+
+      - name: Deploy bundle
+        run: databricks bundle deploy -t prod
+
+      - name: Run pipeline
+        run: databricks bundle run -t prod retail_sales_pipeline
